@@ -55,7 +55,7 @@ class Detector(object):
 		self.vertical_FOV = rospy.get_param("/GGCNN/vertical_FOV")
 		
 		# Publish the image with the bounding boxes to ROS
-		self.img_pub = rospy.Publisher('img/bouding_box', Image, queue_size=1)
+		self.img_pub = rospy.Publisher('img/bounding_box', Image, queue_size=1)
 		# Publish the bounding boxes coordinates
 		self.bb_points_array = rospy.Publisher('bb_points_array', Int32MultiArray, queue_size=10)
 		self.label_array = rospy.Publisher('label_array', Int32MultiArray, queue_size=10)
@@ -207,7 +207,7 @@ class Detector(object):
 		img = cv2.rectangle(img_2, (GGCNN_area[0], GGCNN_area[1]), (GGCNN_area[2], GGCNN_area[3]), (255, 0, 0), 1)
 				
 		bbox_list, fscores_list, fclass_IDs_list = [], [], [] # bounding boxes of the chosen class
-		
+		bbox_list_backup = bbox_list
 		# If any object is found
 		if fclass_IDs.size > 0:
 			# If the request object is found
@@ -228,6 +228,7 @@ class Detector(object):
 				fscores_list = [fscores_list[largest_score_bb_index[0]]]
 				fclass_IDs_list = [fclass_IDs_list[largest_score_bb_index[0]]]
 
+				bbox_list_backup = bbox_list
 				bbox_list = self.resize_bounding_boxes(bbox_list)
 				self.labels = fclass_IDs_list
 				self.bboxes = bbox_list
@@ -277,7 +278,8 @@ class Detector(object):
 			self.detection_ready.publish(False)
 			self.reposition_robot_flag.publish(False)
 
-		bbox_list = np.array(bbox_list)
+		# bbox_list = np.array(bbox_list)
+		bbox_list = np.array(bbox_list_backup)
 		fscores_list = np.array(fscores_list)
 		fclass_IDs_list = np.array(fclass_IDs_list)
 
@@ -287,7 +289,7 @@ class Detector(object):
 		img = img.astype('uint8')
 		added_image = cv2.addWeighted(depth_image, 0.7, img, 0.8, 0)
 			
-		self.img_pub.publish(CvBridge().cv2_to_imgmsg(added_image, 'bgr8'))
+		self.img_pub.publish(CvBridge().cv2_to_imgmsg(img, 'bgr8'))
 				
 	def detect_main(self):
 		"""
@@ -300,36 +302,40 @@ class Detector(object):
 	
 		rate = rospy.Rate(4)
 		while not rospy.is_shutdown():
-			self.network_inference()
-			if self.receive_bb_status:
-				labels = self.labels
-				bboxes = self.bboxes
-				size = len(bboxes)
-				if size != 0:
-					points_to_send_list = []
-					labels_to_send_list = []
-					for label, bbox in zip(labels, bboxes):
-						labels_to_send_list.append(int(label))
-						points_to_send_list.append(int(bbox[0]))
-						points_to_send_list.append(int(bbox[1]))
-						points_to_send_list.append(int(bbox[2]))
-						points_to_send_list.append(int(bbox[3]))
-				
-					points_to_send.data = points_to_send_list # assign the array with the value you want to send
-					labels_to_send.data = labels_to_send_list
-					self.bb_points_array.publish(points_to_send)
-					self.label_array.publish(labels_to_send)
-					points_to_send.data = []
-					labels_to_send.data = []
-				self.receive_bb_status = False
-			rate.sleep()
+			with TimeIt('detection_process'):
+				self.network_inference()
+				if self.receive_bb_status:
+					labels = self.labels
+					bboxes = self.bboxes
+					size = len(bboxes)
+					if size != 0:
+						points_to_send_list = []
+						labels_to_send_list = []
+						for label, bbox in zip(labels, bboxes):
+							labels_to_send_list.append(int(label))
+							points_to_send_list.append(int(bbox[0]))
+							points_to_send_list.append(int(bbox[1]))
+							points_to_send_list.append(int(bbox[2]))
+							points_to_send_list.append(int(bbox[3]))
+
+						points_to_send.data = points_to_send_list # assign the array with the value you want to send
+						labels_to_send.data = labels_to_send_list
+						self.bb_points_array.publish(points_to_send)
+						self.label_array.publish(labels_to_send)
+						points_to_send.data = []
+						labels_to_send.data = []
+					self.receive_bb_status = False
+				rate.sleep()
 		
 def main():
 	# TODO: You just need to pass the param name inside the log folder (checkpoints folder configured in config.json)
-	params = 'ssd_512_resnet50_v1_coco_best_epoch_0047_map_0.9656.params'
+	# params = 'ssd_512_resnet50_v1_coco_best_epoch_0047_map_0.9656.params'
+	# params = 'ssd_512_resnet50_v1_voc_best_epoch_0038_map_0.9652.params'
+	params = 'ssd_300_vgg16_atrous_voc_best_epoch_0028_map_0.9392.params'
+	params = 'ssd_512_vgg16_atrous_coco_best_epoch_0079_map_0.9535'
 
 	obj_detect = Detector(params, 
-						  model_name='ssd_512_resnet50_v1_coco', 
+						  model_name='ssd_300_vgg16_atrous_voc', 
 						  ctx='gpu', 
 						  filter_threshold=0.8, 
 						  nms_thresh=0.5)

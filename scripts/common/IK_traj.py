@@ -78,7 +78,7 @@ def traj_planner(grasp_position, grasp_step, way_points_number, movement, grasp_
 		if movement=='slow':
 			final_traj_duration = 500.0 # total iteractions
 		elif movement=='fast':
-			final_traj_duration = 350.0
+			final_traj_duration = 300.0
 		v0 = a0 = vf = af = 0
 		t0 = 5.0
 		tf = (t0 + final_traj_duration) / way_points_number # tf by way point
