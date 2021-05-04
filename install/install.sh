@@ -15,25 +15,31 @@ sudo apt-get install ros-kinetic-effort-controllers
 sudo apt-get install ros-kinetic-position-controllers
 sudo apt-get install ros-kinetic-gazebo-ros-pkgs ros-kinetic-gazebo-ros-control
 
-pip install -U setuptools
+curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
+sudo python2 get-pip.py
+pip2 install -U setuptools
 
-echo '###### Installing and upgrading pip | pathlib ######'
-sudo apt install python-pip
-pip install --upgrade pip
-pip install pathlib
+echo '###### Installing and upgrading pip2 | pathlib ######'
+pip2 install --upgrade pip
+pip2 install pathlib
 
 echo '###### Installing additional Deep L. packages etc ######'
-pip install mxnet-cu100 # please install the mxnet for your cuda version
-pip install gluoncv==0.6.0
-pip install opencv-python
-pip install git+https://github.com/WoLpH/portalocker.git@v1.7.1
-pip install keras==2.1.5
-pip install Keras-Applications==1.0.8 
-pip install Keras-Preprocessing==1.1.0 
-pip install matplotlib==2.2.4 
-pip install scikit-image==0.14.5 
-pip install h5py==2.10.0
-pip install tensorflow-gpu==1.14.0
+pip2 install mxnet-cu100 # please install the mxnet for your cuda version
+pip2 install gluoncv==0.6.0
+pip2 install opencv-python
+pip2 install git+https://github.com/WoLpH/portalocker.git@v1.7.1
+pip2 install keras==2.1.5
+pip2 install Keras-Applications==1.0.8 
+pip2 install Keras-Preprocessing==1.1.0 
+pip2 install matplotlib==2.2.4 
+pip2 install scikit-image==0.14.5 
+pip2 install h5py==2.10.0
+pip2 install tensorflow-gpu==1.14.0
+# ERROR: pip's legacy dependency resolver does not consider dependency conflicts when 
+# selecting packages. This behaviour is the source of the following dependency conflicts.
+# launchpadlib 1.10.3 requires testresources, which is not installed.
+# tensorboard 1.14.0 requires futures>=3.1.1; python_version < "3", but you'll have 
+# futures 3.0.5 which is incompatible.
 
 echo '###### Cloning the universal_robot package ######'
 git clone -b kinetic-devel https://github.com/ros-industrial/universal_robot ../../universal_robot
